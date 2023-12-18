@@ -1,0 +1,68 @@
+using System;
+using System.Runtime.InteropServices;
+
+public class Program
+{
+    [DllImport("libc")]
+    private static extern IntPtr gets(IntPtr str);
+
+    [DllImport("libc")]
+    private static extern IntPtr asprintf(out IntPtr str, string format, params object[] args);
+
+    private static string Upper(char c)
+    {
+        return ((char)(c & ~0x20)).ToString();
+    }
+
+    private static string Lower(char c)
+    {
+        return ((char)(c | 0x20)).ToString();
+    }
+
+    private static string GetInput(string prompt)
+    {
+        string input;
+        IntPtr ret;
+        again:
+        Console.Write(prompt);
+        ret = gets(Marshal.StringToHGlobalAnsi(prompt));
+        if (ret == IntPtr.Zero)
+            goto again;
+        input = Marshal.PtrToStringAnsi(ret);
+        return input;
+    }
+
+    private static string Uppercase(string s)
+    {
+        string o = s;
+        for (int i = 0; i < o.Length; i++)
+        {
+            o = o.Remove(i, 1).Insert(i, Upper(o[i]));
+        }
+        return o;
+    }
+
+    public static void Main(string[] args)
+    {
+        string name;
+        string friendlyprompt;
+        string icecream;
+        string pizza;
+        string filename;
+        string command;
+        name = GetInput("Welcome, what is your name: ");
+        asprintf(out friendlyprompt, "{0}, what is your favourite ice cream: ", name);
+        icecream = GetInput(friendlyprompt);
+        asprintf(out friendlyprompt, "{0}! I love {1} ice cream too. What's your favourite pizza, {2}? ", Uppercase(icecream), icecream, name);
+        pizza = GetInput(friendlyprompt);
+        asprintf(out friendlyprompt, "{0} is a good pizza topping.\n", pizza);
+        Console.Write(friendlyprompt);
+        asprintf(out filename, "/tmp/{0}", name);
+        asprintf(out command, "echo 'It was a pleasure to meet you, {0}' >> {1}", name, filename);
+        asprintf(out friendlyprompt, "I've left you a present in {0}\n", filename);
+        Console.Write(friendlyprompt);
+        system(command);
+        Environment.Exit(0);
+    }
+}
+
